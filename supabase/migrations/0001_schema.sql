@@ -1,4 +1,4 @@
--- 물놀이 근무 보드 스키마 (명세서 8장). 모든 시각 timestamptz(UTC 저장), date는 KST 기준 일자.
+-- 물초울 근무 보드 스키마 (명세서 8장). 모든 시각 timestamptz(UTC 저장), date는 KST 기준 일자.
 
 -- 8.1 employees — 고정 7명
 create table if not exists public.employees (
