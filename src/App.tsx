@@ -176,7 +176,7 @@ function Header({
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Wave />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.01em" }}>물놀이 근무 보드</div>
+            <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.01em" }}>물초울 근무 보드</div>
             <div style={{ fontSize: 12, color: C.sub }}>오늘 · {dateInfo.dayType === "weekend" ? "주말·공휴일 운영" : "평일 운영"}</div>
           </div>
         </div>
