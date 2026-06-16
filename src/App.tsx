@@ -7,7 +7,8 @@ import { currentSlot } from "./logic/timetable";
 import { rolesForTime, weekendRolesForTime } from "./logic/roles";
 import type { Role } from "./logic/roles";
 import { C } from "./ui/tokens";
-import { NumBadge, Wave } from "./components/common";
+import { NumBadge } from "./components/common";
+import logoUrl from "./assets/intro_logo.png";
 import { Attendance } from "./screens/Attendance";
 import { Dashboard } from "./screens/Dashboard";
 import { TimetableView } from "./screens/Timetable";
@@ -174,7 +175,7 @@ function Header({
     <header style={{ background: C.surface, borderBottom: `1px solid ${C.line}` }}>
       <div style={{ maxWidth: 920, margin: "0 auto", padding: "14px 18px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Wave />
+          <img src={logoUrl} alt="참진주" style={{ height: 34, width: "auto", display: "block" }} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.01em" }}>물초울 근무 보드</div>
             <div style={{ fontSize: 12, color: C.sub }}>오늘 · {dateInfo.dayType === "weekend" ? "주말·공휴일 운영" : "평일 운영"}</div>
