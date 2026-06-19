@@ -74,12 +74,18 @@ export default function App() {
       : null;
 
   const checkIn = (empId: string, sub?: ReturnType<typeof subPlanFor>) => {
-    // 출석 처리 시 그 사람으로 본인 식별(오클릭 후 올바른 이름을 누르면 자동 정정).
-    // 본인 출석을 다시 눌러 취소하면 식별도 해제.
+    // 이미 다른 사람으로 선택돼 있으면 중복 선택 차단('변경'으로 먼저 해제해야 함)
+    if (me && me !== empId) return;
+    // 출석 처리 시 그 사람으로 본인 식별. 본인 출석을 다시 눌러 취소하면 식별도 해제.
     const wasPresent = state.attendance.some((a) => a.employee_id === empId);
     toggleAttendance(empId, sub ?? undefined);
     if (!wasPresent) identify(empId);
     else if (me === empId) clearMe();
+  };
+  // '변경': 선택(식별)만 해제하고 출석 화면으로 돌아가 다시 고를 수 있게 한다(출석 기록은 유지).
+  const switchPerson = () => {
+    clearMe();
+    setScreen("attendance");
   };
 
   const meNumber = me ? employeeToNumber[me] ?? null : null;
@@ -95,7 +101,7 @@ export default function App() {
         @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
       `}</style>
 
-      <Header screen={screen} setScreen={setScreen} me={me} empById={empById} meNumber={meNumber} dateInfo={dateInfo} onClearMe={clearMe} />
+      <Header screen={screen} setScreen={setScreen} me={me} empById={empById} meNumber={meNumber} dateInfo={dateInfo} onClearMe={switchPerson} />
 
       <main style={{ maxWidth: 920, margin: "0 auto", padding: "20px 18px 64px" }}>
         {!state.ready ? (
@@ -127,6 +133,7 @@ export default function App() {
                 subPlanFor={subPlanFor}
                 checkIn={checkIn}
                 goDash={() => setScreen("dashboard")}
+                onClearMe={switchPerson}
               />
             )}
 
