@@ -28,7 +28,11 @@ export default function App() {
       if (raw) {
         const { date, id } = JSON.parse(raw);
         if (date === state.today) setMe(id);
-        else localStorage.removeItem("mulnori-me");
+        else {
+          // 날짜가 바뀌면(자정 경과 등) 어제의 식별을 해제해 state까지 비운다.
+          localStorage.removeItem("mulnori-me");
+          setMe(null);
+        }
       }
     } catch {
       /* noop */

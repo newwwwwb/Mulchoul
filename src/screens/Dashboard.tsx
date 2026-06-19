@@ -41,9 +41,17 @@ export function Dashboard({
       </section>
     );
   }
+  const myNum = employeeToNumber[me];
+  if (myNum === undefined) {
+    // me가 현재 배정에 없을 때(배정 로딩 윈도우/날짜 변경 직후) result[undefined] 접근 크래시 방지.
+    return (
+      <section className="fade">
+        <Empty title="배정을 불러오는 중입니다" desc="오늘 배정을 불러오는 중이거나 배정에 없습니다. 출석 화면에서 다시 확인해 주세요." />
+      </section>
+    );
+  }
   const attByEmp = new Map(attendance.map((a) => [a.employee_id, a]));
   const isWeekend = dayType === "weekend";
-  const myNum = employeeToNumber[me];
   const myAtt = attByEmp.get(me);
 
   // 오늘 내 타임별 역할 (평일 T1~T6 / 주말 T1~T8)
