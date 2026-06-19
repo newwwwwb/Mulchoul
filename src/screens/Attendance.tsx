@@ -64,7 +64,7 @@ export function Attendance({
           <span style={{ fontSize: 13, fontWeight: 700, color: C.teal }}>
             {meName}님으로 선택됨
           </span>
-          <span style={{ fontSize: 12, color: C.sub }}>다른 사람을 선택하려면 ‘변경’을 누르세요.</span>
+          <span style={{ fontSize: 12, color: C.sub }}>‘변경’을 누르거나, 본인 이름을 다시 눌러 취소하세요.</span>
           <button
             className="btn"
             onClick={onClearMe}
