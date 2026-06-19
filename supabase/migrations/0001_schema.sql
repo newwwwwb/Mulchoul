@@ -90,7 +90,7 @@ create policy "write_subplans_insert" on public.substitute_plans for insert with
 create policy "write_subplans_update" on public.substitute_plans for update using (true) with check (true);
 create policy "write_subplans_delete" on public.substitute_plans for delete using (true);
 
--- daily_records: 바쁜 타임 변경을 위해 update만 허용. insert는 스케줄러/RPC(security definer)가 처리.
-create policy "write_records_update" on public.daily_records for update using (true) with check (true);
+-- daily_records: anon 직접 UPDATE는 허용하지 않는다. 바쁜 타임 변경은 set_busy_time RPC(0003)만 수행
+-- → day_type/first_round_a_role 등 다른 컬럼 위조 차단(명세 7.3: busy_time만 변경 가능).
 
 -- employees / timetables / holidays / daily_number_assignments 는 anon 쓰기 금지(시드/스케줄러 전용).
