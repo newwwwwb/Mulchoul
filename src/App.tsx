@@ -38,6 +38,10 @@ export default function App() {
     setMe(id);
     localStorage.setItem("mulnori-me", JSON.stringify({ date: state.today, id }));
   };
+  const clearMe = () => {
+    setMe(null);
+    localStorage.removeItem("mulnori-me");
+  };
 
   // 번호 ↔ 직원 매핑
   const numberToEmployee = useMemo(() => {
@@ -70,8 +74,12 @@ export default function App() {
       : null;
 
   const checkIn = (empId: string, sub?: ReturnType<typeof subPlanFor>) => {
-    if (!me) identify(empId);
+    // 출석 처리 시 그 사람으로 본인 식별(오클릭 후 올바른 이름을 누르면 자동 정정).
+    // 본인 출석을 다시 눌러 취소하면 식별도 해제.
+    const wasPresent = state.attendance.some((a) => a.employee_id === empId);
     toggleAttendance(empId, sub ?? undefined);
+    if (!wasPresent) identify(empId);
+    else if (me === empId) clearMe();
   };
 
   const meNumber = me ? employeeToNumber[me] ?? null : null;
@@ -87,7 +95,7 @@ export default function App() {
         @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
       `}</style>
 
-      <Header screen={screen} setScreen={setScreen} me={me} empById={empById} meNumber={meNumber} dateInfo={dateInfo} />
+      <Header screen={screen} setScreen={setScreen} me={me} empById={empById} meNumber={meNumber} dateInfo={dateInfo} onClearMe={clearMe} />
 
       <main style={{ maxWidth: 920, margin: "0 auto", padding: "20px 18px 64px" }}>
         {!state.ready ? (
@@ -157,6 +165,7 @@ function Header({
   empById,
   meNumber,
   dateInfo,
+  onClearMe,
 }: {
   screen: Screen;
   setScreen: (s: Screen) => void;
@@ -164,6 +173,7 @@ function Header({
   empById: (id: string) => { name: string } | undefined;
   meNumber: number | null;
   dateInfo: { dayType: string };
+  onClearMe: () => void;
 }) {
   const tabs: [Screen, string][] = [
     ["attendance", "출석"],
@@ -208,6 +218,14 @@ function Header({
             <span style={{ fontSize: 13, color: C.sub }}>나</span>
             <span style={{ fontWeight: 700, fontSize: 14 }}>{empById(me)?.name}</span>
             {meNumber && <NumBadge n={meNumber} />}
+            <button
+              className="btn"
+              onClick={onClearMe}
+              title="다른 사람으로 바꾸기 (식별만 해제, 출석은 유지)"
+              style={{ border: `1px solid ${C.line}`, background: "#fff", color: C.sub, borderRadius: 7, padding: "3px 8px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+            >
+              변경
+            </button>
           </div>
         )}
       </div>
