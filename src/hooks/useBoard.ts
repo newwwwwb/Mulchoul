@@ -38,11 +38,19 @@ export function useBoard() {
   // 출석 토글 진행 중인 직원 — 연타/중복 요청 방지(in-flight 가드)
   const pendingAtt = useRef<Set<string>>(new Set());
 
-  // 실시간 시계: 1분마다 갱신
+  // 실시간 시계: 분 경계(:00초)에 정렬해 갱신 → 슬롯 전환이 최대 1분 늦게 보이던 문제 제거
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | undefined;
     const tick = () => setNow(kstNow());
-    const id = setInterval(tick, 60 * 1000);
-    return () => clearInterval(id);
+    const msToNextMinute = 60000 - (Date.now() % 60000);
+    const timeoutId = setTimeout(() => {
+      tick();
+      intervalId = setInterval(tick, 60 * 1000);
+    }, msToNextMinute);
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   // 오늘 날짜에 종속된 데이터 다시 불러오기

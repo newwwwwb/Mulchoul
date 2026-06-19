@@ -21,6 +21,14 @@ export function Calendar({ employees, empById, today }: { employees: Employee[];
 
   useEffect(() => {
     reload();
+    // 다른 기기의 대타 등록/삭제도 즉시 반영
+    const channel = supabase
+      .channel("calendar-subplans")
+      .on("postgres_changes", { event: "*", schema: "public", table: "substitute_plans" }, () => reload())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [reload]);
 
   const add = async () => {
