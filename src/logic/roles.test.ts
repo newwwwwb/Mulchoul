@@ -77,6 +77,25 @@ describe("주말 weekendRolesForTime", () => {
     expect(result[7].role).toBe("문진");
     expect(result[7].group).toBe("보강");
   });
+
+  it("busyTime 위치에 따라 휴식 순서가 자동으로 밀린다 (명세 4.3-2 예시: busy=5)", () => {
+    // T1~T4=1~4번, T5=전원, T6~T8=5~7번
+    const expected: Record<number, number | null> = { 1: 1, 2: 2, 3: 3, 4: 4, 5: null, 6: 5, 7: 6, 8: 7 };
+    for (let t = 1; t <= 8; t++) {
+      expect(weekendRolesForTime(t, "문진", 5).restingNumber).toBe(expected[t]);
+    }
+  });
+
+  it("범위 밖 busyTime은 기본 3으로 clamp되어 불변식 유지", () => {
+    for (const bad of [0, 9, -1, 3.5, NaN]) {
+      for (let t = 1; t <= 8; t++) {
+        const { result } = weekendRolesForTime(t, "문진", bad as number);
+        expect(countRole(result, "현장")).toBe(3); // 항상 현장 3
+      }
+      // 기본 3과 동일하게 동작
+      expect(weekendRolesForTime(3, "문진", bad as number).isBusy).toBe(true);
+    }
+  });
 });
 
 describe("opposite", () => {

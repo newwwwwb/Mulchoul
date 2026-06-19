@@ -51,6 +51,8 @@ export function weekendRolesForTime(
   firstRoundARole: Role,
   busyTime: number
 ): TimeRoles {
+  // DB 손상·범위 밖 값 방어: 바쁜 타임은 1~8만 유효, 아니면 기본 3.
+  if (!Number.isInteger(busyTime) || busyTime < 1 || busyTime > 8) busyTime = 3;
   const round = Math.ceil(timeIndex / 2);
   const aRole = round % 2 === 1 ? firstRoundARole : opposite(firstRoundARole);
   const bRole = opposite(aRole);

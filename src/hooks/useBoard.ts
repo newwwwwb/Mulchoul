@@ -35,6 +35,8 @@ export function useBoard() {
   const [subPlans, setSubPlans] = useState<SubstitutePlan[]>([]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 출석 토글 진행 중인 직원 — 연타/중복 요청 방지(in-flight 가드)
+  const pendingAtt = useRef<Set<string>>(new Set());
 
   // 실시간 시계: 1분마다 갱신
   useEffect(() => {
@@ -115,31 +117,39 @@ export function useBoard() {
   // ---- 액션: 출석 토글 (낙관적 업데이트) ----
   const toggleAttendance = useCallback(
     async (employeeId: string, sub?: SubstitutePlan) => {
-      const existing = attendance.find((a) => a.employee_id === employeeId);
-      if (existing) {
-        // 취소: 행 삭제
-        setAttendance((prev) => prev.filter((a) => a.employee_id !== employeeId));
-        const { error: e } = await supabase.from("attendance").delete().eq("id", existing.id);
-        if (e) await reloadToday(today);
-      } else {
-        // 출석: 낙관적 추가
-        const optimistic: Attendance = {
-          id: `tmp-${employeeId}`,
-          date: today,
-          employee_id: employeeId,
-          check_in_at: new Date().toISOString(),
-          is_substitute: !!sub,
-          substitute_name: sub?.substitute_name ?? null,
-        };
-        setAttendance((prev) => [...prev, optimistic]);
-        const { error: e } = await supabase.from("attendance").insert({
-          date: today,
-          employee_id: employeeId,
-          is_substitute: !!sub,
-          substitute_name: sub?.substitute_name ?? null,
-        });
-        if (e) await reloadToday(today);
-        else await reloadToday(today);
+      // 진행 중이면 무시: 연타 시 stale 상태로 분기가 두 번 결정되는 것을 차단
+      if (pendingAtt.current.has(employeeId)) return;
+      pendingAtt.current.add(employeeId);
+      try {
+        const existing = attendance.find((a) => a.employee_id === employeeId);
+        if (existing) {
+          // 취소: 행 삭제
+          setAttendance((prev) => prev.filter((a) => a.employee_id !== employeeId));
+          const { error: e } = await supabase.from("attendance").delete().eq("id", existing.id);
+          if (e) console.error("[attendance] delete 실패", e);
+        } else {
+          // 출석: 낙관적 추가 (key 충돌 방지를 위해 고유 임시 id)
+          const optimistic: Attendance = {
+            id: `tmp-${crypto.randomUUID()}`,
+            date: today,
+            employee_id: employeeId,
+            check_in_at: new Date().toISOString(),
+            is_substitute: !!sub,
+            substitute_name: sub?.substitute_name ?? null,
+          };
+          setAttendance((prev) => [...prev, optimistic]);
+          const { error: e } = await supabase.from("attendance").insert({
+            date: today,
+            employee_id: employeeId,
+            is_substitute: !!sub,
+            substitute_name: sub?.substitute_name ?? null,
+          });
+          if (e) console.error("[attendance] insert 실패", e);
+        }
+        // insert/delete 모두 끝에서 서버 상태로 수렴(대칭). Realtime echo와 충돌해도 진실로 정렬.
+        await reloadToday(today);
+      } finally {
+        pendingAtt.current.delete(employeeId);
       }
     },
     [attendance, today, reloadToday]
@@ -150,10 +160,8 @@ export function useBoard() {
     async (t: number, byName: string) => {
       const at = new Date().toISOString();
       setRecord((prev) => (prev ? { ...prev, busy_time: t, busy_time_by: byName, busy_time_at: at } : prev));
-      const { error: e } = await supabase
-        .from("daily_records")
-        .update({ busy_time: t, busy_time_by: byName, busy_time_at: at })
-        .eq("date", today);
+      // busy_time 외 컬럼 위조를 막기 위해 전용 RPC 경유(직접 UPDATE 정책 제거됨). 시각은 서버 now()로 확정.
+      const { error: e } = await supabase.rpc("set_busy_time", { p_date: today, p_busy: t, p_by: byName });
       if (e) await reloadToday(today);
     },
     [today, reloadToday]
